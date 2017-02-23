@@ -1,45 +1,62 @@
 import numpy as np
+import re
 
-
-def parse_lines(filename='data/shakespeare.txt'):
+def parse_words_lines(filename='data/shakespeare.txt',
+                      ignore_chars='[\n,;:.!?()]',
+                      min_line_length=3):
     """
-    Parse raw text into observation sequences, assuming that one line is a
-    sequence and one word is an observation. Splitting was done by interpreting
-    a space as a delimiter.
+    Takes a text file and converts it to a list of samples.
+    Each word is a sample, each line is a sequence.
 
-    All punctuation, except apostrophes, is stripped. All words are converted
-    to lowercase.
-
-    :param filename: Name of file to read data from
-    :return: A list of lists (sequences)
+    :param filename: filename of data to read
+    :param ignore_chars: regexp of characters to disregard
+    :param min_line_length: Lines with less than this number of words are
+    disregarded.
+    :return: samples: shape(n_samples,1), an effectively 1D array of samples.
+    Note that samples are represented by nonnegative integers.
+    :return: lengths: shape(n_sequences,) a 1D array of the lengths of the
+    individual sequences. The sum of the lengths should be n_samples.
+    :return: conv_list: shape(n_observations,) a 1D array whose i'th element is
+    the word corresponding to observation i
     """
-    sequences = []
 
+    # First, get a list of lists of words.
+    word_lists = []
     with open(filename) as file:
         content = file.readlines()
 
-        # Interpret line in lower case only.
-        # Strip punctuation and end-of-line characters.
-        content = [line.lower().strip('[\n,;:.!?]()') for line in content]
+        # Interpret line in lower case. Strip the ignored characters.
+        content = [line.lower() for line in content]
+        content = [re.sub(pattern=ignore_chars, repl='', string=line)
+                   for line in content]
 
         word_lists = [line.split() for line in content]
 
-        # Lines of length below 2 are not even text.
-        word_lists = [words for words in word_lists if len(words) >= 2]
+        # Disregard lines that are too short.
+        word_lists = [word_list for word_list in word_lists
+                      if len(word_list) >= min_line_length]
 
-    sequences, conversion_dict = items_to_numbers(word_lists)
+    sequences, conv_list = items_to_numbers(word_lists)
 
-    return sequences, conversion_dict
-    pass
+    # Flatten 'sequences' into a list of samples, but retain sequence lengths.
+    lengths = np.array([len(sequence) for sequence in sequences])
+    samples = []
+    for sequence in sequences:
+        for sample in sequence:
+            samples.append(sample)
+    samples = np.array(samples)
+    samples = np.reshape(a=samples, newshape=(len(samples), 1))
+
+    return samples, lengths, conv_list
 
 
 def items_to_numbers(item_lists):
     """
-    Replaces a list of sequences of
+    Replaces a list of sequences of items with integer observations.
     :param item_lists: A list of lists of strings (words)
-    :return:
-        sequences: A list of emission sequences
-        conversion_list: A list, with ith element being the item for integer i
+    :return: sequences: A list of integer-observation sequences
+    :return: conv_list: A list, with ith element being the item corresponding
+        to observatoin i
     """
 
     # Flatten the array
@@ -62,8 +79,3 @@ def items_to_numbers(item_lists):
             sequences[i][j] = item_dict[sequences[i][j]]
 
     return sequences, unique_items
-
-if __name__ == "__main__":
-    parse_result = parse_lines()
-    print(parse_result[0])
-    print(parse_result[1])
