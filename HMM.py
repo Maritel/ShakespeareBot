@@ -220,7 +220,9 @@ class HiddenMarkovModel:
 
         # Compute all numerators
         for f in range(self.L):
+            print(str(f))
             for g in range(self.L):
+
                 # Counting the number of f->g transitions
                 counter = 0
                 for n in range(len(Y)):
@@ -354,20 +356,24 @@ class HiddenMarkovModel:
                 for xt in range(self.D):
                     self.O[curr][xt] = O_num[curr][xt] / O_den[curr]
 
-    def generate_emission(self, M):
+    def generate_emission(self, M, start_state=None):
         '''
         Generates an emission of length M, assuming that the starting state
         is chosen uniformly at random. 
 
         Arguments:
             M:          Length of the emission to generate.
+            start_state: state to start in
 
         Returns:
             emission:   The randomly generated emission as a string.
         '''
 
         emission = []
-        state = random.choice(range(self.L))
+        if start_state is None:
+            state = random.choice(range(self.L))
+        else:
+            state = start_state
 
         for t in range(M):
             # Sample next observation.

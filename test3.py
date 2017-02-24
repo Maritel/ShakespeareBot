@@ -8,6 +8,14 @@ import HMM
 
 X, word_conv = dataprocessing.parse_words_lines()
 word_lists = dataprocessing.get_word_lists()
+print(X)
+for i in range(len(X)):
+    X[i].reverse()
+print(X)
+print(word_lists)
+for i in range(len(word_lists)):
+    word_lists[i].reverse()
+print(word_lists)
 
 # Load up saved pos
 with open('pos.txt', 'rb') as file:
@@ -36,7 +44,5 @@ hmm = HMM.unsupervised_HMM(X, n_states=len(unique_Ys), n_iters=0)
 
 hmm.supervised_learning(X, Y)
 
-for _ in range(5):
-    emission = hmm.generate_emission(10)
-    translation = [word_conv[i] for i in emission]
-    print(translation)
+with open('poshmm.txt', 'wb') as file:
+    pickle.dump(hmm, file)

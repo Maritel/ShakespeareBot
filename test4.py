@@ -2,10 +2,18 @@ import dataprocessing
 import numpy as np
 import HMM
 import pickle
+import copy
 
-X, conversion_list = dataprocessing.parse_words_lines()
+X_raw, conversion_list = dataprocessing.parse_words_lines()
 
-n_states = 15
+print(X_raw)
+# REVERSE X
+X = copy.deepcopy(X_raw)
+for i in range(len(X_raw)):
+    X[i].reverse()
+print(X)
+
+n_states = 50
 lines = []
 emissions = []
 n_observations = len(conversion_list)

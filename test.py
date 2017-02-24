@@ -2,11 +2,7 @@ import poetrytools
 import dataprocessing
 from nltk import pos_tag
 import nltk
+import numpy as np
 
-raw = "Hi there. My name is Professor Oak."
-poem = ['No', 'more', 'swords', 'no', 'more', 'dreams']
-
-token = nltk.word_tokenize(raw)
-print(token)
-print(pos_tag(token))
-print(pos_tag(poem))
+array = np.array([5, 3, 1])
+print(np.random.choice(array))
