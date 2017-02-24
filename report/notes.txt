@@ -1,20 +1,36 @@
 What counts as an "observation?"
 
-There are about 3500 distinct words. Then O has dimensions [# states, ~3500]
+There are over 3000 distinct words. Then O has dimensions [# states, ~3500]
 which is quite undesirable. Despite this, we tried anyway, with 10 states, in
 test1.py.
 Some sample length-10 sequences:
-impute astronomy oft restored called wert arrest that's buy zealous
-shaken titles sufficed idolatry arrest mutual dian's zealous whether zealous
-loveliness mutual mayst zealous zealous resort zealous zealous zealous zealous
+5 states: a of in flame yellow and care heart am love
+10 states: better i to is hold pricked for to each up
+20 states: i taught yet a have applying all part manys perfectst
+40 states: my dedicated might golden and my no it a tickled
+80 states: my i bear his being from every upon with reckon
 
-Why is 'zealous' so common? Because every time, there's one state that favors
-'zealous' immensely.
-For example, in one run:
-P(zealous | state i) = [  3.26546267e-08   7.07025288e-10   5.93471675e-05   1.32970137e-07
-   9.28531004e-01   3.74419657e-06   3.74968293e-04   5.78826445e-01
-   4.88150635e-01   1.16727845e-04]
-As you can see, there's one state that goes to 'zealous' 93% of the time.
-This is despite the fact that 'zealous' shows up quite literally once in all of
-the sonnets.
 
+Supervised Based on Stress Signature:
+In an attempt to accomplish metering, we tried a supervised HMM with the states
+being the stress signature of the word. The stress signature simply denotes
+whether each syllable in the word is stressed or unstressed. For example,
+"savannah" is 010, since only the second syllable is stressed. "Whistling" is
+10. There were 19 unique stress signatures in Shakespeare's poems, the most
+common being 0 (2872 times) and 1 (11158 times). The least common were 0010 and
+1101, each occuring one time. Therefore, we made 19 states.
+Fully supervised training was in test2.py
+sample sentences:
+wide such purity i beauty my thee action o is
+indireclty i i others west quicker tomb changes glazed of
+releasing thought doth make to-morrow on antique the since thou
+into thought that o a it heavenly look matter catch
+every days prouder above pictured what a shalt guides part
+
+Next we try supervised based on part of speech.
+This was in test3.py
+when may the dearest amis in feeds were you have
+robe that violet is for heaven is love shall be
+record image not as that outlive and account lovely serving
+stay state mans to love this keeps made from his
+up my tell part on we not thy every moving

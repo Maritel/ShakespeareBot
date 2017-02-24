@@ -1,18 +1,42 @@
-from hmmlearn.hmm import MultinomialHMM as MHMM
 import dataprocessing
+import numpy as np
+import copy
+import HMM
 
-X, seq_lengths, conv_dict = dataprocessing.parse_words_lines()
-print(X)
-print(seq_lengths)
-hmm = MHMM(n_components=5)
+# Label the state with the stress notation.
 
-hmm.fit(X, seq_lengths)
+X, word_conv = dataprocessing.parse_words_lines()
+word_lists = dataprocessing.get_word_lists()
 
-generation = hmm.sample(10)
+stresses, syllables = dataprocessing.analyze_syllables(word_lists)
+flattened_stresses = []
+for i in range(len(stresses)):
+    for j in range(len(stresses[i])):
+        flattened_stresses.append(stresses[i][j])
 
-observations = generation[1]
+unique_stresses, stress_counts = np.unique(flattened_stresses,
+                                           return_counts=True)
+print(unique_stresses)
+print(stress_counts)
+stress_dict = {}
+for i in range(len(unique_stresses)):
+    stress_dict[unique_stresses[i]] = i
 
-translation = [conv_dict[i] for i in observations]
-print(translation)
+Y = copy.deepcopy(stresses)
+flattened_Y = []
+for i in range(len(Y)):
+    for j in range(len(Y[i])):
+        flattened_Y.append(stress_dict[Y[i][j]])
+        Y[i][j] = stress_dict[Y[i][j]]
+
+unique_Ys, counts = np.unique(flattened_Y, return_counts=True)
+
+hmm = HMM.unsupervised_HMM(X, n_states=len(unique_Ys), n_iters=0)
+
+hmm.supervised_learning(X, Y)
 
 
+for _ in range(5):
+    emission = hmm.generate_emission(10)
+    translation = [word_conv[i] for i in emission]
+    print(translation)

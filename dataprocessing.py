@@ -1,62 +1,105 @@
 import numpy as np
 import re
+import poetrytools
+import copy
+import nltk
 
 def parse_words_lines(filename='data/shakespeare.txt',
-                      ignore_chars='[\n,;:.!?()]',
-                      min_line_length=3):
+                      ignore_chars="[\n,';:.!?()]"):
     """
-    Takes a text file and converts it to a list of samples.
-    Each word is a sample, each line is a sequence.
+    Parse raw text into observation sequences, assuming that one line is a
+    sequence and one word is an observation. Splitting was done by interpreting
+    a space as a delimiter.
 
-    :param filename: filename of data to read
-    :param ignore_chars: regexp of characters to disregard
-    :param min_line_length: Lines with less than this number of words are
-    disregarded.
-    :return: samples: shape(n_samples,1), an effectively 1D array of samples.
-    Note that samples are represented by nonnegative integers.
-    :return: lengths: shape(n_sequences,) a 1D array of the lengths of the
-    individual sequences. The sum of the lengths should be n_samples.
-    :return: conv_list: shape(n_observations,) a 1D array whose i'th element is
-    the word corresponding to observation i
+    :param filename: filename to read from
+    :param ignore_chars: regex to ignore specific characters in each line
+    :param padding: whether to pad sequences to make them equal length
+    :return: sequences: a list of integer observation sequences
+    :return: conversion_list: a list whose i'th element is the item
+        corresponding to observation i
     """
 
-    # First, get a list of lists of words.
-    word_lists = []
+    word_lists = get_word_lists(filename=filename, ignore_chars=ignore_chars)
+
+    sequences, conversion_list = items_to_numbers(word_lists)
+
+    return sequences, conversion_list
+    pass
+
+
+def get_word_lists(filename='data/shakespeare.txt',
+                   ignore_chars="[\n,';:.!?()]"):
+    """
+    Translates raw text into a list of lists of words.
+    :param filename: file to read form
+    :param ignore_chars: characters to ignore completely
+    :return: word_lists: list of lists of word. Each list is a line.
+    """
     with open(filename) as file:
         content = file.readlines()
 
-        # Interpret line in lower case. Strip the ignored characters.
+        # Interpret line in lower case only.
+        # Strip punctuation and end-of-line characters.
         content = [line.lower() for line in content]
         content = [re.sub(pattern=ignore_chars, repl='', string=line)
                    for line in content]
 
         word_lists = [line.split() for line in content]
 
-        # Disregard lines that are too short.
-        word_lists = [word_list for word_list in word_lists
-                      if len(word_list) >= min_line_length]
+        # Lines of length below 2 are not even text.
+        word_lists = [words for words in word_lists if len(words) >= 2]
 
-    sequences, conv_list = items_to_numbers(word_lists)
+    return word_lists
 
-    # Flatten 'sequences' into a list of samples, but retain sequence lengths.
-    lengths = np.array([len(sequence) for sequence in sequences])
-    samples = []
-    for sequence in sequences:
-        for sample in sequence:
-            samples.append(sample)
-    samples = np.array(samples)
-    samples = np.reshape(a=samples, newshape=(len(samples), 1))
 
-    return samples, lengths, conv_list
+def analyze_syllables(word_lists):
+    """
+    For each word in the list of lists of words, return its syllable stresses
+    and its syllable count.
+    :param word_lists: A list of lists of word.
+    :return: stresses: Stress notations for each word. Same shape as
+    'word_lists'
+    :return: syllables: Syllable counts for each word. Same shape as
+    'word_lists'
+    """
+    stresses = poetrytools.scanscion(word_lists)
+
+    # deep copy
+    syllables = copy.deepcopy(stresses)
+    for i in range(len(syllables)):
+        for j in range(len(syllables[i])):
+            syllables[i][j] = len(syllables[i][j])
+
+    return stresses, syllables
+
+
+def analyze_POS(word_lists):
+    """
+    Return the POS of each word.
+    :param word_lists: A list of lists of words
+    :return: POS: parts of speech for every word. Same shape as 'word_lists'
+    """
+    tagged = copy.deepcopy(word_lists)
+
+    for i in range(len(tagged)):
+        print(i)
+        tagged[i] = nltk.pos_tag(tagged[i])
+
+    for i in range(len(tagged)):
+        for j in range(len(tagged[i])):
+            print(str(i) + ',' + str(j))
+            tagged[i][j] = tagged[i][j][1]
+
+    return tagged
 
 
 def items_to_numbers(item_lists):
     """
-    Replaces a list of sequences of items with integer observations.
+    Replaces a list of sequences of items with integers.
     :param item_lists: A list of lists of strings (words)
-    :return: sequences: A list of integer-observation sequences
-    :return: conv_list: A list, with ith element being the item corresponding
-        to observatoin i
+    :return: sequences: A list of lists of integers
+    :return: conversion_list: A list, with ith element being the item
+        corresponding to integer i
     """
 
     # Flatten the array
@@ -73,9 +116,41 @@ def items_to_numbers(item_lists):
         item_dict[unique_items[i]] = i
 
     # Convert all items
-    sequences = item_lists
+    sequences = copy.deepcopy(item_lists)
     for i in range(len(sequences)):
         for j in range(len(sequences[i])):
             sequences[i][j] = item_dict[sequences[i][j]]
 
     return sequences, unique_items
+
+def pad(sequences, pad_value=-1):
+    """
+    Convert sequences into a 2D matrix. 'pad_value' is used to signal that the
+    line has already ended.
+
+    :param sequences: A list of integer observation sequences
+    :param pad_value: The value to pad with.
+    :return: padded_sequences:
+    """
+
+    # Find the maximum-length sequence.
+    max_length = -float('inf')
+    for sequence in sequences:
+        if len(sequence) > max_length:
+            max_length = len(sequence)
+
+    # Initialize the 2D array with -1 in every entry.
+    padded_sequences = np.full(shape=[len(sequences), max_length],
+                               fill_value=-1,
+                               dtype=np.int)
+
+    # Fill the values that are known.
+    for i in range(len(sequences)):
+        for j in range(len(sequences[i])):
+            padded_sequences[i][j] = sequences[i][j]
+
+    return padded_sequences
+
+
+if __name__ == "__main__":
+    pass

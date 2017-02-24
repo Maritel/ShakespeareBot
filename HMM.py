@@ -7,6 +7,8 @@
 ########################################
 
 import random
+import numpy as np
+
 
 class HiddenMarkovModel:
     '''
@@ -173,6 +175,95 @@ class HiddenMarkovModel:
                     betas[t - 1][curr] /= norm
 
         return betas
+
+    def supervised_learning(self, X, Y):
+        '''
+        Trains the HMM using the Maximum Likelihood closed form solutions
+        for the transition and observation matrices on a labeled
+        datset (X, Y). Note that this method does not return anything, but
+        instead updates the attributes of the HMM object.
+
+        Arguments:
+            X:          A dataset consisting of input sequences in the form
+                        of lists of variable length, consisting of integers
+                        ranging from 0 to D - 1. In other words, a list of
+                        lists.
+            Y:          A dataset consisting of state sequences in the form
+                        of lists of variable length, consisting of integers
+                        ranging from 0 to L - 1. In other words, a list of
+                        lists.
+                        Note that the elements in X line up with those in Y.
+        '''
+        # Calculate each element of A using the M-step formulas.
+
+        ###
+
+        # We save the denominators, which only depend on one feature
+        # (To be precise, the denominator of updated A[i][j] only depends on i)
+        # This avoids repeated computation
+
+        denoms_a = np.empty(self.L)  # one denominator for each state
+
+        # Compute all denominators
+        for f in range(self.L):
+            # f is a state
+            # We simply add up all instances of y=f for states in all sequences
+            counter = 0
+            for n in range(len(Y)):
+                for t in range(len(Y[n]) - 1):
+                    if Y[n][t] == f:
+                        counter += 1
+            denoms_a[f] = counter
+
+        # Compute all numerators
+        for f in range(self.L):
+            for g in range(self.L):
+                # Counting the number of f->g transitions
+                counter = 0
+                for n in range(len(Y)):
+                    for t in range(len(Y[n]) - 1):
+                        if Y[n][t] == f and Y[n][t+1] == g:
+                            counter += 1
+
+                # 'counter' now holds the "numerator"
+                if denoms_a[f] != 0:
+                    self.A[f][g] = counter / denoms_a[f]
+                else:
+                    self.A[f][g] = 1 / self.L
+
+
+        ###
+
+        # Calculate each element of O using the M-step formulas.
+
+        ###
+
+        denoms_o = np.empty(self.L)  # same strategy as above
+
+        # Compute denominators
+        for f in range(self.L):
+            # Counting the number of occurrences of state f
+            counter = 0
+            for n in range(len(Y)):
+                for t in range(len(Y[n])):
+                    if Y[n][t] == f:
+                        counter += 1
+            denoms_o[f] = counter
+
+        # Compute numerators
+        for f in range(self.L):
+            for d in range(self.D):
+                # Counting the number of (state f, observation d) occurrences
+                counter = 0
+                for n in range(len(Y)):
+                    for t in range(len(Y[n])):
+                        if Y[n][t] == f and X[n][t] == d:
+                            counter += 1
+
+                # 'counter' holds numerator
+                self.O[f][d] = counter / denoms_o[f]
+
+        ###
 
     def unsupervised_learning(self, X, iters):
         '''
