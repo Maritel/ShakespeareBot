@@ -15,7 +15,7 @@ class HiddenMarkovModel:
     Class implementation of Hidden Markov Models.
     '''
 
-    def __init__(self, A, O):
+    def __init__(self, A, O, A_start=None):
         '''
         Initializes an HMM. Assumes the following:
             - States and observations are integers starting from 0. 
@@ -53,7 +53,10 @@ class HiddenMarkovModel:
         self.D = len(O[0])
         self.A = A
         self.O = O
-        self.A_start = [1. / self.L for _ in range(self.L)]
+        if A_start is None:
+            self.A_start = [1. / self.L for _ in range(self.L)]
+        else:
+            self.A_start = A_start
 
 
     def forward(self, x, normalize=False):

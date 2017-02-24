@@ -1,8 +1,8 @@
 What counts as an "observation?"
 
 There are over 3000 distinct words. Then O has dimensions [# states, ~3500]
-which is quite undesirable. Despite this, we tried anyway, with 10 states, in
-test1.py.
+which is quite undesirable. Despite this, there doesn't seem to be a better
+approach.
 Some sample length-10 sequences:
 5 states: a of in flame yellow and care heart am love
 10 states: better i to is hold pricked for to each up
@@ -34,3 +34,8 @@ robe that violet is for heaven is love shall be
 record image not as that outlive and account lovely serving
 stay state mans to love this keeps made from his
 up my tell part on we not thy every moving
+should so own thou worth to make their at the
+fair use a day till and thinly to believe better
+five buds my grow and no will justify speed you
+more benefit with death see thy saucy was now though
+those beautys others wise of book of eye when pride
